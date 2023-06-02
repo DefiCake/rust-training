@@ -12,7 +12,9 @@ struct Cli {
 fn main() -> Result<()> {
   let args = Cli::parse();
 
-  let file = std::fs::File::open(&args.path).with_context(|| format!("Could not read path {}", "wtf"))?;
+  let file = std::fs::File
+    ::open(&args.path)
+    .with_context(|| format!("Could not read path {}", &args.path.into_os_string().into_string().unwrap()))?;
 
   for (i, line) in std::io::BufReader::new(file).lines().enumerate() {
     match line {
