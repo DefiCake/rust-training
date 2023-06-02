@@ -1,5 +1,6 @@
 use std::io::BufRead;
 
+use anyhow::{ Context, Result };
 use clap::Parser;
 
 #[derive(Parser)]
@@ -8,13 +9,10 @@ struct Cli {
   path: std::path::PathBuf,
 }
 
-fn main() {
+fn main() -> Result<()> {
   let args = Cli::parse();
 
-  let file = match std::fs::File::open(&args.path) {
-    Ok(file) => { file }
-    Err(error) => { panic!("Could not read file, {}", error) }
-  };
+  let file = std::fs::File::open(&args.path).with_context(|| format!("Could not read path {}", "wtf"))?;
 
   for (i, line) in std::io::BufReader::new(file).lines().enumerate() {
     match line {
@@ -28,4 +26,6 @@ fn main() {
       }
     }
   }
+
+  Ok(())
 }
