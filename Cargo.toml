@@ -1,5 +1,6 @@
 [workspace]
 
 members = [
-    "getting-started/cli/"
+    "getting-started/cli/",
+    "getting-started/output/"
 ]
