@@ -2,5 +2,6 @@
 
 members = [
     "getting-started/cli/",
-    "getting-started/output/"
+    "getting-started/output/",
+    "getting-started/loader/"
 ]
