@@ -1,0 +1,14 @@
+[package]
+name = "ctf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ethers = "2.0"
+# Ethers' async features rely upon the Tokio async runtime.
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+# Flexible concrete Error Reporting type built on std::error::Error with customizable Reports
+eyre = "0.6"
+hex = "0.4"
+sha256 = "1.1.4"
+ethabi = "18.0.0"
