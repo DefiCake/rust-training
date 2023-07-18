@@ -4,5 +4,6 @@ members = [
     "getting-started/cli/",
     "getting-started/output/",
     "getting-started/loader/",
-    "getting-started/ctf/"
+    "getting-started/ctf/",
+    "getting-started/logging",
 ]
