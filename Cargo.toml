@@ -7,5 +7,6 @@ members = [
     "getting-started/ctf/",
     "getting-started/logging",
     "getting-started/automated_testing",
-    "getting-started/signals"
+    "getting-started/signals",
+    "getting-started/config"
 ]
