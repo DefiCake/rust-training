@@ -8,7 +8,8 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 clap = {version = "4.0", features = ["derive"]}
-fuel-core = "0.20.1"
+fuel-core = {version = "0.20.1", features = ["relayer"]}
+fuels=  "0.44.0"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 log = "0.4.19"
 env_logger = "0.10.0"
