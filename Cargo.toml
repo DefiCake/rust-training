@@ -9,5 +9,6 @@ members = [
     "getting-started/automated_testing",
     "getting-started/signals",
     "getting-started/config",
-    "x509"
+    "x509",
+    "fuel/block-transition-validation"
 ]
