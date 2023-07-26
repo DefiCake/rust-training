@@ -1,18 +1,24 @@
+mod wallet;
+
 use std::sync::Arc;
 
 use fuel_core::{
-  database::{ transaction::DatabaseTransaction, transactions::TransactionIndex, vm_database::VmDatabase, Database },
+  database::Database,
   chain_config::{ ChainConfig, StateConfig, CoinConfig },
-  service::{ Config, FuelService },
+  service::{ Config as FuelServiceConfig, FuelService },
   types::{
     fuel_types::{ Address, AssetId, Nonce },
     fuel_crypto::rand::{ rngs::StdRng, Rng, RngCore, SeedableRng },
     blockchain::primitives::DaBlockHeight,
     entities::message::Message,
+    fuel_tx::{ TransactionBuilder, Output },
+    fuel_asm::{ op, RegId },
+    fuel_vm::SecretKey,
   },
-  executor::{ Executor, RelayerPort },
+  executor::RelayerPort,
 };
-use fuels::client::FuelClient;
+use fuels::{ client::FuelClient, prelude::WalletUnlocked, types::UtxoId };
+use wallet::wallet::Wallet;
 
 #[derive(Clone, Debug)]
 struct MyRelayer {
@@ -34,7 +40,8 @@ async fn main() {
   let mut rng = StdRng::seed_from_u64(10);
 
   // a coin with all options set
-  let alice: Address = rng.gen();
+  let alice_secret: SecretKey = rng.gen();
+  let alice = Wallet::new(alice_secret);
   let asset_id_alice: AssetId = rng.gen();
   let alice_value = rng.gen();
   let alice_maturity = Some(rng.next_u32().into());
@@ -49,7 +56,7 @@ async fn main() {
   let asset_id_bob: AssetId = rng.gen();
   let bob_value = rng.gen();
 
-  let service_config = Config {
+  let fuel_service_config = FuelServiceConfig {
     chain_conf: ChainConfig {
       initial_state: Some(StateConfig {
         coins: Some(
@@ -60,7 +67,7 @@ async fn main() {
               tx_pointer_block_height: alice_block_created,
               tx_pointer_tx_idx: alice_block_created_tx_idx,
               maturity: alice_maturity,
-              owner: alice,
+              owner: alice.clone().into(),
               amount: alice_value,
               asset_id: asset_id_alice,
             },
@@ -86,31 +93,51 @@ async fn main() {
       }),
       ..ChainConfig::local_testnet()
     },
-    ..Config::local_node()
+    ..FuelServiceConfig::local_node()
   };
 
   let database = Database::in_memory();
   let relayer: MyRelayer = MyRelayer { database: database.clone() };
-  let srv = FuelService::from_database(database.clone(), service_config).await.unwrap();
+  let srv = FuelService::from_database(database.clone(), fuel_service_config).await.unwrap();
   let client = FuelClient::from(srv.bound_address);
   srv.await_relayer_synced().await.unwrap();
 
   let alice_tx_id_bytes: [u8; 32] = alice_tx_id.unwrap().into();
-  let convertedUtxoId: fuels::types::UtxoId = fuels::types::UtxoId::new(
+  let utxo_id: UtxoId = fuels::types::UtxoId::new(
     fuels::tx::Bytes32::from(alice_tx_id_bytes),
     alice_output_index.unwrap()
   );
-  let coin = client.coin(&convertedUtxoId).await.unwrap();
 
-  let executor: Executor<MyRelayer> = Executor {
-    relayer,
-    database,
-    config: Arc::new(Default::default()),
-  };
+  let tx = TransactionBuilder::script(op::ret(RegId::ONE).to_bytes().into_iter().collect(), vec![])
+    .add_unsigned_coin_input(
+      alice.clone().into(),
+      utxo_id,
+      alice_value,
+      Default::default(),
+      Default::default(),
+      Default::default()
+    )
+    .add_output(Output::Change { to: bob, amount: alice_value, asset_id: Default::default() })
+    .finalize_as_transaction();
 
-  // Next step is to execute a block
-  // executor.execute_without_commit(block, options)
+  let result = srv.submit_and_await_commit(tx).await.unwrap();
 
-  println!("coin: {:?}", coin);
-  println!("owner: {:?}", alice);
+  println!("Transaction: {:?}", result.st);
+
+  // let coin = client.coin(&utxo_id).await.unwrap();
+  // let latestBlock = database.latest_block().unwrap();
+
+  // let executor: Executor<MyRelayer> = Executor {
+  //   relayer,
+  //   database,
+  //   config: Arc::new(Default::default()),
+  // };
+
+  // let block: Block = Block::new(latestBlock.header().into(), [].into(), &[]);
+
+  // let executionOptions: ExecutionOptions = Default::default();
+  // executor.execute_without_commit(block, executionOptions);
+
+  // println!("coin: {:?}", coin);
+  // println!("owner: {:?}", alice);
 }
