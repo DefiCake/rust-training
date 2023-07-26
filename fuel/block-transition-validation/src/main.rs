@@ -1,10 +1,31 @@
+use std::sync::Arc;
+
 use fuel_core::{
-  database::Database,
+  database::{ transaction::DatabaseTransaction, transactions::TransactionIndex, vm_database::VmDatabase, Database },
   chain_config::{ ChainConfig, StateConfig, CoinConfig },
   service::{ Config, FuelService },
-  types::{ fuel_types::{ Address, AssetId }, fuel_crypto::rand::{ rngs::StdRng, Rng, RngCore, SeedableRng } },
+  types::{
+    fuel_types::{ Address, AssetId, Nonce },
+    fuel_crypto::rand::{ rngs::StdRng, Rng, RngCore, SeedableRng },
+    blockchain::primitives::DaBlockHeight,
+    entities::message::Message,
+  },
+  executor::{ Executor, RelayerPort },
 };
 use fuels::client::FuelClient;
+
+#[derive(Clone, Debug)]
+struct MyRelayer {
+  database: Database,
+}
+
+impl RelayerPort for MyRelayer {
+  fn get_message(&self, id: &Nonce, _da_height: &DaBlockHeight) -> anyhow::Result<Option<Message>> {
+    use fuel_core_storage::{ tables::Messages, StorageAsRef };
+    use std::borrow::Cow;
+    Ok(self.database.storage::<Messages>().get(id)?.map(Cow::into_owned))
+  }
+}
 
 #[tokio::main]
 async fn main() {
@@ -69,13 +90,26 @@ async fn main() {
   };
 
   let database = Database::in_memory();
+  let relayer: MyRelayer = MyRelayer { database: database.clone() };
   let srv = FuelService::from_database(database.clone(), service_config).await.unwrap();
   let client = FuelClient::from(srv.bound_address);
   srv.await_relayer_synced().await.unwrap();
 
-  let b: [u8; 32] = alice_tx_id.unwrap().into();
-  let wtf: fuels::types::UtxoId = fuels::types::UtxoId::new(fuels::tx::Bytes32::from(b), alice_output_index.unwrap());
-  let coin = client.coin(&wtf).await.unwrap();
+  let alice_tx_id_bytes: [u8; 32] = alice_tx_id.unwrap().into();
+  let convertedUtxoId: fuels::types::UtxoId = fuels::types::UtxoId::new(
+    fuels::tx::Bytes32::from(alice_tx_id_bytes),
+    alice_output_index.unwrap()
+  );
+  let coin = client.coin(&convertedUtxoId).await.unwrap();
+
+  let executor: Executor<MyRelayer> = Executor {
+    relayer,
+    database,
+    config: Arc::new(Default::default()),
+  };
+
+  // Next step is to execute a block
+  // executor.execute_without_commit(block, options)
 
   println!("coin: {:?}", coin);
   println!("owner: {:?}", alice);

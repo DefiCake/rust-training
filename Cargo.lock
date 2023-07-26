@@ -489,6 +489,7 @@ dependencies = [
  "clap",
  "env_logger",
  "fuel-core",
+ "fuel-core-storage 0.20.1",
  "fuels",
  "log",
  "tokio",
