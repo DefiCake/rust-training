@@ -11,7 +11,6 @@ use fuel_core::{
     fuel_crypto::rand::{ rngs::StdRng, Rng, RngCore, SeedableRng },
     blockchain::primitives::DaBlockHeight,
     entities::message::Message,
-    fuel_tx::{ TransactionBuilder, Output },
     fuel_asm::{ op, RegId },
     fuel_vm::SecretKey,
   },
@@ -19,9 +18,9 @@ use fuel_core::{
 };
 use fuels::{
   client::FuelClient,
-  prelude::{ WalletUnlocked, Provider, Account, BASE_ASSET_ID },
+  prelude::{ WalletUnlocked, Provider, Account, BASE_ASSET_ID, Signer },
   accounts::wallet::Wallet as FuelsViewWallet,
-  types::{ UtxoId, transaction_builders::ScriptTransactionBuilder },
+  types::{ UtxoId, transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder } },
 };
 use wallet::wallet::Wallet;
 
@@ -121,7 +120,11 @@ async fn main() {
 
   let mut outputs = vec![];
   let o = w.get_asset_outputs_for_amount(t.address(), asset_id_alice, alice_value / 2);
-  let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default());
+  outputs.extend(o);
+
+  let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default()).build().unwrap();
+
+  w.sign_transaction(&mut tx).unwrap();
 }
 
 // let tx = TransactionBuilder::script(op::ret(RegId::ONE).to_bytes().into_iter().collect(), vec![])
