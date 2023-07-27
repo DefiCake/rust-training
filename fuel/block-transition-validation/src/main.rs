@@ -17,7 +17,12 @@ use fuel_core::{
   },
   executor::RelayerPort,
 };
-use fuels::{ client::FuelClient, prelude::WalletUnlocked, types::UtxoId };
+use fuels::{
+  client::FuelClient,
+  prelude::{ WalletUnlocked, Provider, Account, BASE_ASSET_ID },
+  accounts::wallet::Wallet as FuelsViewWallet,
+  types::{ UtxoId, transaction_builders::ScriptTransactionBuilder },
+};
 use wallet::wallet::Wallet;
 
 #[derive(Clone, Debug)]
@@ -38,7 +43,6 @@ async fn main() {
   env_logger::init();
 
   let mut rng = StdRng::seed_from_u64(10);
-
   // a coin with all options set
   let alice_secret: SecretKey = rng.gen();
   let alice = Wallet::new(alice_secret);
@@ -98,7 +102,7 @@ async fn main() {
 
   let database = Database::in_memory();
   let relayer: MyRelayer = MyRelayer { database: database.clone() };
-  let srv = FuelService::from_database(database.clone(), fuel_service_config).await.unwrap();
+  let srv = FuelService::from_database(database.clone(), fuel_service_config.clone()).await.unwrap();
   let client = FuelClient::from(srv.bound_address);
   srv.await_relayer_synced().await.unwrap();
 
@@ -108,36 +112,49 @@ async fn main() {
     alice_output_index.unwrap()
   );
 
-  let tx = TransactionBuilder::script(op::ret(RegId::ONE).to_bytes().into_iter().collect(), vec![])
-    .add_unsigned_coin_input(
-      alice.clone().into(),
-      utxo_id,
-      alice_value,
-      Default::default(),
-      Default::default(),
-      Default::default()
-    )
-    .add_output(Output::Change { to: bob, amount: alice_value, asset_id: Default::default() })
-    .finalize_as_transaction();
+  let provider = Provider::connect(srv.bound_address.to_string()).await.unwrap();
+  let w = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
+  let t = FuelsViewWallet::from_address(bob.into(), None);
+  let mut inputs = vec![];
+  let i = w.get_asset_inputs_for_amount(asset_id_alice, alice_value / 2, None).await.unwrap();
+  inputs.extend(i);
 
-  let result = srv.submit_and_await_commit(tx).await.unwrap();
-
-  println!("Transaction: {:?}", result.st);
-
-  // let coin = client.coin(&utxo_id).await.unwrap();
-  // let latestBlock = database.latest_block().unwrap();
-
-  // let executor: Executor<MyRelayer> = Executor {
-  //   relayer,
-  //   database,
-  //   config: Arc::new(Default::default()),
-  // };
-
-  // let block: Block = Block::new(latestBlock.header().into(), [].into(), &[]);
-
-  // let executionOptions: ExecutionOptions = Default::default();
-  // executor.execute_without_commit(block, executionOptions);
-
-  // println!("coin: {:?}", coin);
-  // println!("owner: {:?}", alice);
+  let mut outputs = vec![];
+  let o = w.get_asset_outputs_for_amount(t.address(), asset_id_alice, alice_value / 2);
+  let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default());
 }
+
+// let tx = TransactionBuilder::script(op::ret(RegId::ONE).to_bytes().into_iter().collect(), vec![])
+//   .add_unsigned_coin_input(
+//     alice.clone().into(),
+//     utxo_id,
+//     alice_value,
+//     Default::default(),
+//     Default::default(),
+//     Default::default()
+//   )
+//   .gas_limit(fuel_service_config.chain_conf.block_gas_limit - 1)
+//   .gas_price(1)
+//   .add_output(Output::Change { to: bob, amount: alice_value, asset_id: Default::default() })
+//   .finalize_as_transaction();
+
+// let result = srv.submit_and_await_commit(tx).await.unwrap();
+
+// println!("Transaction: {:?}", result);
+
+// let coin = client.coin(&utxo_id).await.unwrap();
+// let latestBlock = database.latest_block().unwrap();
+
+// let executor: Executor<MyRelayer> = Executor {
+//   relayer,
+//   database,
+//   config: Arc::new(Default::default()),
+// };
+
+// let block: Block = Block::new(latestBlock.header().into(), [].into(), &[]);
+
+// let executionOptions: ExecutionOptions = Default::default();
+// executor.execute_without_commit(block, executionOptions);
+
+// println!("coin: {:?}", coin);
+// println!("owner: {:?}", alice);
