@@ -1,26 +1,22 @@
 mod wallet;
 
-use std::sync::Arc;
-
 use fuel_core::{
   database::Database,
-  chain_config::{ ChainConfig, StateConfig, CoinConfig },
+  chain_config::{ ChainConfig, StateConfig, CoinConfig, ChainConfigDb },
   service::{ Config as FuelServiceConfig, FuelService },
   types::{
     fuel_types::{ Address, AssetId, Nonce },
     fuel_crypto::rand::{ rngs::StdRng, Rng, RngCore, SeedableRng },
     blockchain::primitives::DaBlockHeight,
     entities::message::Message,
-    fuel_asm::{ op, RegId },
     fuel_vm::SecretKey,
   },
   executor::RelayerPort,
 };
 use fuels::{
-  client::FuelClient,
-  prelude::{ WalletUnlocked, Provider, Account, BASE_ASSET_ID, Signer },
+  prelude::{ WalletUnlocked, Provider, Account, Signer },
   accounts::wallet::Wallet as FuelsViewWallet,
-  types::{ UtxoId, transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder } },
+  types::transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder },
 };
 use wallet::wallet::Wallet;
 
@@ -99,17 +95,8 @@ async fn main() {
     ..FuelServiceConfig::local_node()
   };
 
-  let database = Database::in_memory();
-  let relayer: MyRelayer = MyRelayer { database: database.clone() };
-  let srv = FuelService::from_database(database.clone(), fuel_service_config.clone()).await.unwrap();
-  let client = FuelClient::from(srv.bound_address);
+  let srv = FuelService::from_database(Database::in_memory(), fuel_service_config.clone()).await.unwrap();
   srv.await_relayer_synced().await.unwrap();
-
-  let alice_tx_id_bytes: [u8; 32] = alice_tx_id.unwrap().into();
-  let utxo_id: UtxoId = fuels::types::UtxoId::new(
-    fuels::tx::Bytes32::from(alice_tx_id_bytes),
-    alice_output_index.unwrap()
-  );
 
   let provider = Provider::connect(srv.bound_address.to_string()).await.unwrap();
   let w = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
@@ -122,9 +109,15 @@ async fn main() {
   let o = w.get_asset_outputs_for_amount(t.address(), asset_id_alice, alice_value / 2);
   outputs.extend(o);
 
-  let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default()).build().unwrap();
+  let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default())
+    // .set_gas_limit(fuel_service_config.chain_conf.block_gas_limit / 2)
+    .build()
+    .unwrap();
 
   w.sign_transaction(&mut tx).unwrap();
+
+  let receipt = provider.send_transaction(&tx).await.unwrap();
+  println!("receipt {:?}", receipt);
 }
 
 // let tx = TransactionBuilder::script(op::ret(RegId::ONE).to_bytes().into_iter().collect(), vec![])
