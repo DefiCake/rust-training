@@ -2,16 +2,13 @@ mod wallet;
 
 use fuel_core::{
   database::Database,
-  chain_config::{ ChainConfig, StateConfig, CoinConfig, ChainConfigDb },
+  chain_config::{ ChainConfig, StateConfig, CoinConfig },
   service::{ Config as FuelServiceConfig, FuelService },
   types::{
-    fuel_types::{ Address, AssetId, Nonce },
+    fuel_types::{ Address, AssetId },
     fuel_crypto::rand::{ rngs::StdRng, Rng, RngCore, SeedableRng },
-    blockchain::primitives::DaBlockHeight,
-    entities::message::Message,
     fuel_vm::SecretKey,
   },
-  executor::RelayerPort,
 };
 use fuels::{
   prelude::{ WalletUnlocked, Provider, Account, Signer },
@@ -19,19 +16,6 @@ use fuels::{
   types::transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder },
 };
 use wallet::wallet::Wallet;
-
-#[derive(Clone, Debug)]
-struct MyRelayer {
-  database: Database,
-}
-
-impl RelayerPort for MyRelayer {
-  fn get_message(&self, id: &Nonce, _da_height: &DaBlockHeight) -> anyhow::Result<Option<Message>> {
-    use fuel_core_storage::{ tables::Messages, StorageAsRef };
-    use std::borrow::Cow;
-    Ok(self.database.storage::<Messages>().get(id)?.map(Cow::into_owned))
-  }
-}
 
 #[tokio::main]
 async fn main() {
@@ -48,7 +32,6 @@ async fn main() {
   let alice_block_created_tx_idx = Some(rng.gen());
   let alice_tx_id = Some(rng.gen());
   let alice_output_index = Some(rng.gen());
-  // let alice_utxo_id = UtxoId::new(alice_tx_id.unwrap(), alice_output_index.unwrap());
 
   // a coin with minimal options set
   let bob: Address = rng.gen();
@@ -95,11 +78,13 @@ async fn main() {
     ..FuelServiceConfig::local_node()
   };
 
-  let srv = FuelService::from_database(Database::in_memory(), fuel_service_config.clone()).await.unwrap();
+  let database = Database::in_memory();
+  let srv = FuelService::from_database(database.clone(), fuel_service_config.clone()).await.unwrap();
   srv.await_relayer_synced().await.unwrap();
 
   let provider = Provider::connect(srv.bound_address.to_string()).await.unwrap();
   let w = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
+
   let t = FuelsViewWallet::from_address(bob.into(), None);
   let mut inputs = vec![];
   let i = w.get_asset_inputs_for_amount(asset_id_alice, alice_value / 2, None).await.unwrap();
@@ -119,38 +104,3 @@ async fn main() {
   let receipt = provider.send_transaction(&tx).await.unwrap();
   println!("receipt {:?}", receipt);
 }
-
-// let tx = TransactionBuilder::script(op::ret(RegId::ONE).to_bytes().into_iter().collect(), vec![])
-//   .add_unsigned_coin_input(
-//     alice.clone().into(),
-//     utxo_id,
-//     alice_value,
-//     Default::default(),
-//     Default::default(),
-//     Default::default()
-//   )
-//   .gas_limit(fuel_service_config.chain_conf.block_gas_limit - 1)
-//   .gas_price(1)
-//   .add_output(Output::Change { to: bob, amount: alice_value, asset_id: Default::default() })
-//   .finalize_as_transaction();
-
-// let result = srv.submit_and_await_commit(tx).await.unwrap();
-
-// println!("Transaction: {:?}", result);
-
-// let coin = client.coin(&utxo_id).await.unwrap();
-// let latestBlock = database.latest_block().unwrap();
-
-// let executor: Executor<MyRelayer> = Executor {
-//   relayer,
-//   database,
-//   config: Arc::new(Default::default()),
-// };
-
-// let block: Block = Block::new(latestBlock.header().into(), [].into(), &[]);
-
-// let executionOptions: ExecutionOptions = Default::default();
-// executor.execute_without_commit(block, executionOptions);
-
-// println!("coin: {:?}", coin);
-// println!("owner: {:?}", alice);
