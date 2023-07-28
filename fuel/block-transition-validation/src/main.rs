@@ -17,7 +17,7 @@ use fuels::{
   types::transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder },
 };
 use wallet::wallet::Wallet;
-use json::json::to_file;
+use json::json::{ to_file, from_file };
 
 #[tokio::main]
 async fn main() {
