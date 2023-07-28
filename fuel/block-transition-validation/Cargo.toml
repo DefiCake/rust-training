@@ -14,3 +14,5 @@ fuels=  "0.44.0"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 log = "0.4.19"
 env_logger = "0.10.0"
+serde = { version = "1.0.174", features = ["derive"] }
+serde_json = "1.0.104"

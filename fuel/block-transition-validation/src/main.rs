@@ -1,4 +1,5 @@
 mod wallet;
+mod json;
 
 use fuel_core::{
   database::Database,
@@ -16,6 +17,7 @@ use fuels::{
   types::transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder },
 };
 use wallet::wallet::Wallet;
+use json::json::to_file;
 
 #[tokio::main]
 async fn main() {
@@ -83,9 +85,13 @@ async fn main() {
   srv.await_relayer_synced().await.unwrap();
 
   let provider = Provider::connect(srv.bound_address.to_string()).await.unwrap();
-  let w = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
 
+  let block_a = srv.shared.database.get_current_block().unwrap().unwrap();
+  println!("Block A: {:?}", block_a);
+
+  let w = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
   let t = FuelsViewWallet::from_address(bob.into(), None);
+
   let mut inputs = vec![];
   let i = w.get_asset_inputs_for_amount(asset_id_alice, alice_value / 2, None).await.unwrap();
   inputs.extend(i);
@@ -103,4 +109,11 @@ async fn main() {
 
   let receipt = provider.send_transaction(&tx).await.unwrap();
   println!("receipt {:?}", receipt);
+
+  let block_b = srv.shared.database.get_current_block().unwrap().unwrap();
+  println!("Block B: {:?}", block_b);
+
+  // This does not get me enough information to rebuild the block and block transition...
+  to_file(block_a, "block_a.json".to_string()).expect("Failed block_a write");
+  to_file(block_b, "block_b.json".to_string()).expect("Failed block_b write");
 }
