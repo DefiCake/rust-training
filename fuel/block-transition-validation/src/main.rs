@@ -1,5 +1,5 @@
 mod wallet;
-mod json;
+mod serialization;
 
 use fuel_core::{
   database::Database,
@@ -17,7 +17,7 @@ use fuels::{
   types::transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder },
 };
 use wallet::wallet::Wallet;
-use json::json::{ to_file, from_file };
+use serialization::{ json::to_json_file, bincode::{ from_bincode_file, to_bincode_file } };
 
 #[tokio::main]
 async fn main() {
@@ -114,6 +114,11 @@ async fn main() {
   println!("Block B: {:?}", block_b);
 
   // This does not get me enough information to rebuild the block and block transition...
-  to_file(block_a, "block_a.json".to_string()).expect("Failed block_a write");
-  to_file(block_b, "block_b.json".to_string()).expect("Failed block_b write");
+  to_json_file(&block_a, "block_a.json".to_string()).expect("Failed block_a json write");
+  to_json_file(&block_b, "block_b.json".to_string()).expect("Failed block_b write");
+
+  to_bincode_file(&block_a, "block_a.bincode".to_string()).expect("Failed block_a bincode write");
+  to_bincode_file(&block_b, "block_b.bincode".to_string()).expect("Failed block_a bincode write");
+
+  let read_block_a = from_bincode_file("block_a.bincode".to_string()).expect("Failed block_a bincode read");
 }

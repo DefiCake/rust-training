@@ -3,7 +3,7 @@ use anyhow::Result;
 use fuel_core::types::blockchain::block::Block;
 use fuels::tx::Bytes32;
 
-pub fn to_file(block: Cow<Block<Bytes32>>, path: String) -> Result<()> {
+pub fn to_json_file(block: &Cow<Block<Bytes32>>, path: String) -> Result<()> {
   let str = serde_json::to_string(&block)?;
   OpenOptions::new().create(true).write(true).truncate(true).open(&path)?;
   write(&path, str).expect("Failed to write to path");
@@ -11,7 +11,7 @@ pub fn to_file(block: Cow<Block<Bytes32>>, path: String) -> Result<()> {
   Ok(())
 }
 
-pub fn from_file(path: String) -> Result<Block<Bytes32>> {
+pub fn from_json_file(path: String) -> Result<Block<Bytes32>> {
   let f = File::open(path)?;
   let block: Block<Bytes32> = serde_json::from_reader(f)?;
 
