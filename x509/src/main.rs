@@ -1,4 +1,4 @@
-use std::{ io::{ BufRead, BufReader, Read }, path::PathBuf };
+use std::{ io::{ BufReader, Read }, path::PathBuf };
 
 use anyhow::{ Context, Result };
 use clap::Parser;
@@ -28,7 +28,7 @@ fn main() -> Result<()> {
 
   // This gives Error: error:0308010C:digital envelope routines:inner_evp_generic_fetch:unsupported:crypto/evp/evp_fetch.c... it might have to do with OS dependencies,
   // need to enable legacy openssl
-  let parsed = pkcs12.parse(&pass)?;
+  let _parsed = pkcs12.parse2(&pass)?;
 
   // for (i, line) in std::io::BufReader::new(file).lines().enumerate() {
   //   match line {
