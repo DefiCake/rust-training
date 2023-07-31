@@ -11,6 +11,7 @@ pub fn to_json_file(block: &Cow<Block<Bytes32>>, path: String) -> Result<()> {
   Ok(())
 }
 
+#[allow(dead_code)]
 pub fn from_json_file(path: String) -> Result<Block<Bytes32>> {
   let f = File::open(path)?;
   let block: Block<Bytes32> = serde_json::from_reader(f)?;
