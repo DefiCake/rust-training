@@ -1,5 +1,6 @@
 mod wallet;
 mod serialization;
+mod cli;
 
 use fuel_core::{
   database::Database,
@@ -19,9 +20,20 @@ use fuels::{
 use wallet::wallet::Wallet;
 use serialization::{ json::to_json_file, bincode::{ from_bincode_file, to_bincode_file } };
 
+use cli::cli::{ Mode, mode };
+
 #[tokio::main]
 async fn main() {
   env_logger::init();
+
+  match mode() {
+    Mode::Bootstrap => {
+      println!("BOOTSTRAP");
+    }
+    Mode::Load => {
+      println!("LOAD");
+    }
+  }
 
   let mut rng = StdRng::seed_from_u64(10);
   // a coin with all options set
@@ -87,7 +99,7 @@ async fn main() {
   let provider = Provider::connect(srv.bound_address.to_string()).await.unwrap();
 
   let block_a = srv.shared.database.get_current_block().unwrap().unwrap();
-  println!("Block A: {:?}", block_a);
+  // println!("Block A: {:?}", block_a);
 
   let w = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
   let t = FuelsViewWallet::from_address(bob.into(), None);
@@ -111,7 +123,7 @@ async fn main() {
   println!("receipt {:?}", receipt);
 
   let block_b = srv.shared.database.get_current_block().unwrap().unwrap();
-  println!("Block B: {:?}", block_b);
+  // println!("Block B: {:?}", block_b);
 
   // This does not get me enough information to rebuild the block and block transition...
   to_json_file(&block_a, "block_a.json".to_string()).expect("Failed block_a json write");
@@ -120,5 +132,10 @@ async fn main() {
   to_bincode_file(&block_a, "block_a.bincode".to_string()).expect("Failed block_a bincode write");
   to_bincode_file(&block_b, "block_b.bincode".to_string()).expect("Failed block_a bincode write");
 
-  let read_block_a = from_bincode_file("block_a.bincode".to_string()).expect("Failed block_a bincode read");
+  let read_block_b = from_bincode_file("block_b.bincode".to_string()).expect("Failed block_a bincode read");
+
+  // println!("Read block b");
+  // println!("{:?}", &read_block_b);
+  // println!("{:?}", &block_b);
+  assert_eq!(read_block_b, block_b.into_owned());
 }
