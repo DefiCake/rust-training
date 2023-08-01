@@ -3,6 +3,7 @@ mod serialization;
 mod cli;
 mod bootstrap;
 mod load;
+mod memstore;
 
 use cli::cli::{ Mode, mode };
 use bootstrap::bootstrap;
