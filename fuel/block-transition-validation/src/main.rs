@@ -2,10 +2,11 @@ mod wallet;
 mod serialization;
 mod cli;
 mod bootstrap;
-
-use bootstrap::bootstrap;
+mod load;
 
 use cli::cli::{ Mode, mode };
+use bootstrap::bootstrap;
+use load::load;
 
 #[tokio::main]
 async fn main() {
@@ -18,6 +19,7 @@ async fn main() {
     }
     Mode::Load => {
       println!("LOAD");
+      load().await;
     }
   }
 }

@@ -4,23 +4,26 @@ use std::io::Read;
 use anyhow::Result;
 use fuel_core::types::blockchain::block::Block;
 use fuels::tx::Bytes32;
-use std::borrow::Cow;
 use bincode;
 
-pub fn to_bincode_file(block: &Cow<Block<Bytes32>>, path: String) -> Result<()> {
-  let bin_data = bincode::serialize(&block)?;
-  let mut file = File::create(&path)?;
-  file.write_all(&bin_data)?;
+use crate::serialization::lib::BinFileSerde;
 
-  Ok(())
-}
+impl BinFileSerde for Block<Bytes32> {
+  fn to_bincode_file(&self, path: String) -> Result<()> {
+    let bin_data = bincode::serialize(&self)?;
+    let mut file = File::create(&path)?;
+    file.write_all(&bin_data)?;
 
-pub fn from_bincode_file(path: String) -> Result<Block<Bytes32>> {
-  let mut file = File::open(&path)?;
-  let mut bin_data = Vec::new();
-  file.read_to_end(&mut bin_data)?;
+    Ok(())
+  }
 
-  let block: Block<Bytes32> = bincode::deserialize(&bin_data)?;
+  fn from_bincode_file(path: String) -> Result<Self> where Self: Sized {
+    let mut file = File::open(&path)?;
+    let mut bin_data = Vec::new();
+    file.read_to_end(&mut bin_data)?;
 
-  Ok(block)
+    let block: Block<Bytes32> = bincode::deserialize(&bin_data)?;
+
+    Ok(block)
+  }
 }

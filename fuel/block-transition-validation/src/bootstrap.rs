@@ -6,15 +6,18 @@ use fuel_core::{
     fuel_types::{ Address, AssetId },
     fuel_crypto::rand::{ rngs::StdRng, Rng, RngCore, SeedableRng },
     fuel_vm::SecretKey,
+    blockchain::block::Block,
   },
 };
 use fuels::{
   prelude::{ WalletUnlocked, Provider, Account, Signer },
   accounts::wallet::Wallet as FuelsViewWallet,
   types::transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder },
+  tx::Bytes32,
 };
+
 use crate::wallet::wallet::Wallet;
-use crate::serialization::bincode::{ from_bincode_file, to_bincode_file };
+use crate::serialization::lib::BinFileSerde;
 
 pub async fn bootstrap() {
   let mut rng = StdRng::seed_from_u64(10);
@@ -81,7 +84,6 @@ pub async fn bootstrap() {
   let provider = Provider::connect(srv.bound_address.to_string()).await.unwrap();
 
   let block_a = srv.shared.database.get_current_block().unwrap().unwrap();
-  // println!("Block A: {:?}", block_a);
 
   let w = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
   let t = FuelsViewWallet::from_address(bob.into(), None);
@@ -94,10 +96,7 @@ pub async fn bootstrap() {
   let o = w.get_asset_outputs_for_amount(t.address(), asset_id_alice, alice_value / 2);
   outputs.extend(o);
 
-  let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default())
-    // .set_gas_limit(fuel_service_config.chain_conf.block_gas_limit / 2)
-    .build()
-    .unwrap();
+  let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default()).build().unwrap();
 
   w.sign_transaction(&mut tx).unwrap();
 
@@ -105,19 +104,15 @@ pub async fn bootstrap() {
   println!("receipt {:?}", receipt);
 
   let block_b = srv.shared.database.get_current_block().unwrap().unwrap();
-  // println!("Block B: {:?}", block_b);
 
   // This does not get me enough information to rebuild the block and block transition...
   // to_json_file(&block_a, "block_a.json".to_string()).expect("Failed block_a json write");
   // to_json_file(&block_b, "block_b.json".to_string()).expect("Failed block_b write");
 
-  to_bincode_file(&block_a, "block_a.bincode".to_string()).expect("Failed block_a bincode write");
-  to_bincode_file(&block_b, "block_b.bincode".to_string()).expect("Failed block_a bincode write");
+  block_a.to_bincode_file("block_a.bincode".to_string()).expect("Failed block_a bincode write");
+  block_b.to_bincode_file("block_b.bincode".to_string()).expect("Failed block_a bincode write");
 
-  let read_block_b = from_bincode_file("block_b.bincode".to_string()).expect("Failed block_a bincode read");
+  let read_block_b: Block<Bytes32> = BinFileSerde::from_bincode_file("block_b.bincode".to_string()).expect("a");
 
-  // println!("Read block b");
-  // println!("{:?}", &read_block_b);
-  // println!("{:?}", &block_b);
   assert_eq!(read_block_b, block_b.into_owned());
 }
