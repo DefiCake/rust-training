@@ -1,4 +1,5 @@
 use fuel_core::types::{ fuel_vm::SecretKey, fuel_types::Address, fuel_crypto::PublicKey, fuel_tx::Input };
+use fuels::prelude::Bech32Address;
 
 #[derive(Debug, Clone)]
 pub struct Wallet {
@@ -29,5 +30,11 @@ impl Into<Address> for Wallet {
 impl Into<SecretKey> for Wallet {
   fn into(self) -> SecretKey {
     self.secret
+  }
+}
+
+impl Into<Bech32Address> for Wallet {
+  fn into(self) -> Bech32Address {
+    self.address.into()
   }
 }

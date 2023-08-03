@@ -6,7 +6,7 @@ use fuel_core::{
   service::{ Config as FuelServiceConfig, FuelService },
   types::{
     fuel_types::{ Address, AssetId },
-    fuel_crypto::rand::{ rngs::StdRng, Rng, RngCore, SeedableRng },
+    fuel_crypto::rand::{ rngs::StdRng, Rng, SeedableRng },
     fuel_vm::SecretKey,
     blockchain::block::Block,
   },
@@ -90,8 +90,10 @@ pub async fn bootstrap() {
   let receipt = provider.send_transaction(&tx).await.unwrap();
   println!("receipt {:?}", receipt);
 
-  // let alice_balance = provider.get_asset_balance(alice.into(), Default::default()).await.unwrap();
-  // let bob_balance = provider.get_asset_balance(bob.into(), Default::default()).await.unwrap();
+  let alice_balance = provider.get_asset_balance(&alice.clone().into(), Default::default()).await.unwrap();
+  let bob_balance = provider.get_asset_balance(&bob.clone().into(), Default::default()).await.unwrap();
+  dbg!(alice_balance);
+  dbg!(bob_balance);
 
   let block_b = srv.shared.database.get_current_block().unwrap().unwrap();
 
