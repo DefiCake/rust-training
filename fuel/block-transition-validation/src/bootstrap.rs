@@ -1,3 +1,5 @@
+use std::{ path::Path, sync::Arc };
+
 use fuel_core::{
   database::Database,
   chain_config::{ ChainConfig, StateConfig, CoinConfig },
@@ -8,6 +10,7 @@ use fuel_core::{
     fuel_vm::SecretKey,
     blockchain::block::Block,
   },
+  state::rocks_db::RocksDb,
 };
 use fuels::{
   prelude::{ WalletUnlocked, Provider, Account, Signer },
@@ -20,56 +23,40 @@ use crate::wallet::wallet::Wallet;
 use crate::serialization::lib::BinFileSerde;
 
 pub async fn bootstrap() {
+  let path_string = String::from("rocksdb");
+  let path = Path::new(&path_string);
+  let _res = std::fs::remove_dir_all(&path_string);
+
   let mut rng = StdRng::seed_from_u64(10);
   // a coin with all options set
   let alice_secret: SecretKey = rng.gen();
   let alice = Wallet::new(alice_secret);
-  let asset_id_alice: AssetId = rng.gen();
-  let alice_value = rng.gen();
-  let alice_maturity = Some(rng.next_u32().into());
-  let alice_block_created = Some(rng.next_u32().into());
-  let alice_block_created_tx_idx = Some(rng.gen());
+  let asset_id_alice: AssetId = Default::default();
+  let alice_value = 10_000_000;
+  let alice_maturity = Some((0).into());
+  let alice_block_created = Some((0).into());
+  let alice_block_created_tx_idx = Some(0);
   let alice_tx_id = Some(rng.gen());
   let alice_output_index = Some(rng.gen());
 
-  // a coin with minimal options set
   let bob: Address = rng.gen();
-  let asset_id_bob: AssetId = rng.gen();
-  let bob_value = rng.gen();
 
   let fuel_service_config = FuelServiceConfig {
     chain_conf: ChainConfig {
       initial_state: Some(StateConfig {
         coins: Some(
-          vec![
-            CoinConfig {
-              tx_id: alice_tx_id,
-              output_index: alice_output_index,
-              tx_pointer_block_height: alice_block_created,
-              tx_pointer_tx_idx: alice_block_created_tx_idx,
-              maturity: alice_maturity,
-              owner: alice.clone().into(),
-              amount: alice_value,
-              asset_id: asset_id_alice,
-            },
-            CoinConfig {
-              tx_id: None,
-              output_index: None,
-              tx_pointer_block_height: None,
-              tx_pointer_tx_idx: None,
-              maturity: None,
-              owner: bob,
-              amount: bob_value,
-              asset_id: asset_id_bob,
-            }
-          ]
+          vec![CoinConfig {
+            tx_id: alice_tx_id,
+            output_index: alice_output_index,
+            tx_pointer_block_height: alice_block_created,
+            tx_pointer_tx_idx: alice_block_created_tx_idx,
+            maturity: alice_maturity,
+            owner: alice.clone().into(),
+            amount: alice_value,
+            asset_id: asset_id_alice,
+          }]
         ),
-        height: alice_block_created.map(|h| {
-          let mut h: u32 = h.into();
-          // set starting height to something higher than alice's coin
-          h = h.saturating_add(rng.next_u32());
-          h.into()
-        }),
+        height: Some((0).into()),
         ..Default::default()
       }),
       ..ChainConfig::local_testnet()
@@ -77,7 +64,7 @@ pub async fn bootstrap() {
     ..FuelServiceConfig::local_node()
   };
 
-  let database = Database::in_memory();
+  let database = Database::new(Arc::new(RocksDb::default_open(path, None).unwrap()));
   let srv = FuelService::from_database(database.clone(), fuel_service_config.clone()).await.unwrap();
   srv.await_relayer_synced().await.unwrap();
 
@@ -102,6 +89,9 @@ pub async fn bootstrap() {
 
   let receipt = provider.send_transaction(&tx).await.unwrap();
   println!("receipt {:?}", receipt);
+
+  // let alice_balance = provider.get_asset_balance(alice.into(), Default::default()).await.unwrap();
+  // let bob_balance = provider.get_asset_balance(bob.into(), Default::default()).await.unwrap();
 
   let block_b = srv.shared.database.get_current_block().unwrap().unwrap();
 
