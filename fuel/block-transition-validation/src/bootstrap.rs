@@ -19,7 +19,7 @@ use fuels::{
   tx::Bytes32,
 };
 
-use crate::wallet::wallet::Wallet;
+use crate::{ wallet::wallet::Wallet, memstore::MemStore };
 use crate::serialization::lib::BinFileSerde;
 
 pub async fn bootstrap() {
@@ -64,7 +64,10 @@ pub async fn bootstrap() {
     ..FuelServiceConfig::local_node()
   };
 
-  let database = Database::new(Arc::new(RocksDb::default_open(path, None).unwrap()));
+  let datasource = Arc::new(MemStore::default());
+  // let datasource = Arc::new(RocksDb::default_open(path, None).unwrap());
+
+  let database = Database::new(datasource);
   let srv = FuelService::from_database(database.clone(), fuel_service_config.clone()).await.unwrap();
   srv.await_relayer_synced().await.unwrap();
 
