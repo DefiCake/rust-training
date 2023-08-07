@@ -12,6 +12,7 @@ use fuel_core::{
   },
   state::rocks_db::RocksDb,
 };
+use fuel_tx::Script;
 use fuels::{
   prelude::{ WalletUnlocked, Provider, Account, Signer },
   accounts::wallet::Wallet as FuelsViewWallet,
@@ -93,8 +94,12 @@ pub async fn bootstrap(db_type: DBType) {
   outputs.extend(o);
 
   let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default()).build().unwrap();
-
   w.sign_transaction(&mut tx).unwrap();
+
+  Into::<Script>
+    ::into(tx.clone())
+    .to_bincode_file("transaction.bincode".into())
+    .expect("Error serializing transaction");
 
   let receipt = provider.send_transaction(&tx).await.unwrap();
   println!("receipt {:?}", receipt);

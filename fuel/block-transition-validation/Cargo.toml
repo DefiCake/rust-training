@@ -8,9 +8,10 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 clap = {version = "4.0", features = ["derive", "cargo"]}
-fuel-core = {path = "/Users/mad/fuel/fuel-core/crates/fuel-core", features = ["relayer", "rocksdb"] }
-fuel-core-storage = {path = "/Users/mad/fuel/fuel-core/crates/storage"}
-fuels=  "0.44.0"
+fuel-core = {version = "0.19.1", features = ["relayer", "rocksdb"]}
+fuel-core-storage = "0.19.1"
+fuels={version = "0.44.0", features=["std", "rocksdb", "fuel-core-lib"]}
+fuel-tx = {version = "0.34.0", features = ["serde"]}
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 log = "0.4.19"
 env_logger = "0.10.0"
