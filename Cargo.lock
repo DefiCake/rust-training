@@ -490,6 +490,7 @@ dependencies = [
  "env_logger",
  "fuel-core",
  "fuel-core-storage",
+ "fuel-core-types",
  "fuel-tx",
  "fuels",
  "log",
@@ -2413,6 +2414,7 @@ version = "0.34.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d3a031708a34fcbee85bca5f4b9f0b61cd80bf8555972020ddee2420d7306a47"
 dependencies = [
+ "anyhow",
  "bitflags",
  "derivative",
  "ethnum",

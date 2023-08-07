@@ -9,6 +9,7 @@ edition = "2021"
 anyhow = "1.0"
 clap = {version = "4.0", features = ["derive", "cargo"]}
 fuel-core = {version = "0.19.1", features = ["relayer", "rocksdb"]}
+fuel-core-types = {version = "0.19.1", features = ["test-helpers"]}
 fuel-core-storage = "0.19.1"
 fuels={version = "0.44.0", features=["std", "rocksdb", "fuel-core-lib"]}
 fuel-tx = {version = "0.34.0", features = ["serde"]}
