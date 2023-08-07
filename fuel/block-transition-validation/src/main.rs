@@ -4,6 +4,7 @@ mod cli;
 mod bootstrap;
 mod load;
 mod memstore;
+mod dbsnap;
 
 use cli::cli::{ Mode, DBType, get_args };
 use bootstrap::bootstrap;

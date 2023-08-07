@@ -19,7 +19,7 @@ use fuels::{
   tx::Bytes32,
 };
 
-use crate::{ wallet::wallet::Wallet, cli::cli::DBType };
+use crate::{ wallet::wallet::Wallet, cli::cli::DBType, dbsnap::dbsnap::snapshot };
 use crate::serialization::lib::BinFileSerde;
 
 pub async fn bootstrap(db_type: DBType) {
@@ -75,6 +75,8 @@ pub async fn bootstrap(db_type: DBType) {
   let srv = FuelService::from_database(database.clone(), fuel_service_config.clone()).await.unwrap();
   srv.await_relayer_synced().await.unwrap();
 
+  snapshot(srv.shared.database.clone(), "snapshot_a.json".into()).expect("Failed to do first snapshot");
+
   let provider = Provider::connect(srv.bound_address.to_string()).await.unwrap();
 
   let block_a = srv.shared.database.get_current_block().unwrap().unwrap();
@@ -110,6 +112,7 @@ pub async fn bootstrap(db_type: DBType) {
 
   block_a.to_bincode_file("block_a.bincode".to_string()).expect("Failed block_a bincode write");
   block_b.to_bincode_file("block_b.bincode".to_string()).expect("Failed block_a bincode write");
+  snapshot(srv.shared.database.clone(), "snapshot_b.json".into()).expect("Failed to do second snapshot");
 
   let read_block_b: Block<Bytes32> = BinFileSerde::from_bincode_file("block_b.bincode".to_string()).expect("a");
 

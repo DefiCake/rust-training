@@ -3,3 +3,5 @@ block_b.json
 block_a.bincode
 block_b.bincode
 rocksdb
+snapshot_a.json
+snapshot_b.json
