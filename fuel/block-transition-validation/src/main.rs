@@ -5,7 +5,7 @@ mod bootstrap;
 mod load;
 mod memstore;
 
-use cli::cli::{ Mode, mode };
+use cli::cli::{ Mode, DBType, get_args };
 use bootstrap::bootstrap;
 use load::load;
 
@@ -13,10 +13,15 @@ use load::load;
 async fn main() {
   env_logger::init();
 
-  match mode() {
+  let args = get_args();
+
+  let mode = args.get_one::<Mode>("mode").expect("Required mode").clone();
+
+  match mode {
     Mode::Bootstrap => {
       println!("BOOTSTRAP");
-      bootstrap().await;
+      let db_type = args.get_one::<DBType>("dbtype").expect("Required dbtype").clone();
+      bootstrap(db_type).await;
     }
     Mode::Load => {
       println!("LOAD");
