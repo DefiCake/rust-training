@@ -11,5 +11,6 @@ members = [
     "getting-started/config",
     "getting-started/error-codes",
     "x509",
-    "fuel/block-transition-validation"
+    "fuel/block-transition-validation",
+    "cph/sorting/bubble"
 ]
