@@ -26,7 +26,7 @@ async fn main() {
     }
     Mode::Load => {
       println!("LOAD");
-      load().await;
+      load().await.expect("Failed to load");
     }
   }
 }

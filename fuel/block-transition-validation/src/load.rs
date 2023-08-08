@@ -1,4 +1,4 @@
-use std::{ sync::Arc, fs::File };
+use std::sync::Arc;
 
 use fuel_core::{
   database::Database,
@@ -6,7 +6,8 @@ use fuel_core::{
   types::{ blockchain::{ primitives::DaBlockHeight, block::Block }, entities::message::Message },
   chain_config::ChainConfig,
 };
-use fuels::{ types::Nonce, tx::Bytes32 };
+use fuel_tx::{ Script, Transaction };
+use fuels::types::Nonce;
 
 use crate::serialization::lib::BinFileSerde;
 
@@ -24,19 +25,23 @@ impl RelayerPort for MockRelayer {
 }
 
 pub async fn load() -> anyhow::Result<()> {
-  let f = File::open("snapshot_a.json".to_string())?;
-  let config: ChainConfig = serde_json::from_reader(f)?;
+  let json = std::fs::read_to_string("snapshot_a.json".to_string())?;
+  let config: ChainConfig = serde_json::from_str(json.as_str())?;
 
   let database = Database::in_memory();
-  database.init(&config).expect("Could not initialize database");
+  database.init(&config)?;
 
-  //   database.init(config);
   let relayer: MockRelayer = MockRelayer { database: database.clone() };
   let _executor: Executor<MockRelayer> = Executor {
     relayer,
     database,
     config: Arc::new(Default::default()),
   };
+
+  let script = Script::from_bincode_file("transaction.bincode".into())?;
+  let transaction = Into::<Transaction>::into(script);
+  let mut block: Block<Transaction> = Block::default();
+  *block.transactions_mut() = [transaction].into();
 
   Ok(())
 }
@@ -148,8 +153,8 @@ pub async fn load() -> anyhow::Result<()> {
 
 //   let transaction: Transaction = signedTx.clone().into();
 
-//   let mut block: Block<Transaction> = Block::default();
-//   *block.transactions_mut() = [transaction].into();
+// let mut block: Block<Transaction> = Block::default();
+// *block.transactions_mut() = [transaction].into();
 
 //   let executor: Executor<MyRelayer> = Executor {
 //     relayer: MyRelayer { database: database.clone() },
