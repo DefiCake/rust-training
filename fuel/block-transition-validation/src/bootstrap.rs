@@ -104,13 +104,12 @@ pub async fn bootstrap(db_type: DBType) {
   let receipt = provider.send_transaction(&tx).await.unwrap();
   println!("receipt {:?}", receipt);
 
-  let alice_balance = provider.get_asset_balance(&alice.clone().into(), Default::default()).await.unwrap();
-  let bob_balance = provider.get_asset_balance(&bob.clone().into(), Default::default()).await.unwrap();
-  dbg!(alice_balance);
-  dbg!(bob_balance);
+  // let alice_balance = provider.get_asset_balance(&alice.clone().into(), Default::default()).await.unwrap();
+  // let bob_balance = provider.get_asset_balance(&bob.clone().into(), Default::default()).await.unwrap();
+  // dbg!(alice_balance);
+  // dbg!(bob_balance);
 
   let block_b = srv.shared.database.get_current_block().unwrap().unwrap();
-
   // This does not get me enough information to rebuild the block and block transition...
   // to_json_file(&block_a, "block_a.json".to_string()).expect("Failed block_a json write");
   // to_json_file(&block_b, "block_b.json".to_string()).expect("Failed block_b write");
@@ -124,5 +123,6 @@ pub async fn bootstrap(db_type: DBType) {
   );
 
   assert_eq!(read_block_b, block_b.clone().into_owned());
-  dbg!(block_b.header().time());
+  dbg!(block_b.header());
+  dbg!(block_b.header().hash());
 }
