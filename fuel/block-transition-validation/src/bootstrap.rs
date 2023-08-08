@@ -119,7 +119,10 @@ pub async fn bootstrap(db_type: DBType) {
   block_b.to_bincode_file("block_b.bincode".to_string()).expect("Failed block_a bincode write");
   snapshot(srv.shared.database.clone(), "snapshot_b.json".into()).expect("Failed to do second snapshot");
 
-  let read_block_b: Block<Bytes32> = BinFileSerde::from_bincode_file("block_b.bincode".to_string()).expect("a");
+  let read_block_b: Block<Bytes32> = BinFileSerde::from_bincode_file("block_b.bincode".to_string()).expect(
+    "Failed to roundtrip block_b.bincode"
+  );
 
-  assert_eq!(read_block_b, block_b.into_owned());
+  assert_eq!(read_block_b, block_b.clone().into_owned());
+  dbg!(block_b.header().time());
 }

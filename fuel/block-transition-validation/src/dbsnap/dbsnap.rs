@@ -13,7 +13,7 @@ pub fn snapshot(db: Database, path: String) -> anyhow::Result<()> {
     ..config
   };
 
-  let stringified = serde_json::to_string(&chain_conf)?;
+  let stringified = serde_json::to_string_pretty(&chain_conf)?;
 
   OpenOptions::new().create(true).write(true).truncate(true).open(&path)?;
   write(&path, stringified)?;
