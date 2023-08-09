@@ -55,8 +55,11 @@ mod tests {
 
   #[test]
   fn test_sorts_ordered_array() {
-    let unsorted_arr: [u64; 15] = [1, 5, 4, 3, 6, 7, 8, 3, 1, 4, 5, 6, 7, 3, 2];
-    let mut sorted_arr: [u64; 15] = unsorted_arr.clone();
+    let mut rng = rand::thread_rng();
+    let len = rng.gen_range(1..100);
+
+    let unsorted_arr: Vec<u64> = (1..len).map(|_| rng.gen()).collect();
+    let mut sorted_arr: Vec<u64> = unsorted_arr.clone();
     sorted_arr.sort();
 
     let result = sort(&unsorted_arr.into()).unwrap();
