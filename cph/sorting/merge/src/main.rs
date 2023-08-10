@@ -1,14 +1,12 @@
 use anyhow::Error;
-use log::{ info, warn, error };
 
 // Use environment variable RUST_LOG=<level> to display different levels of logging
 // e.g. RUST_LOG=info
 fn main() {
-  env_logger::init();
-
-  info!("This is an info message");
-  warn!("This is a warn message");
-  error!("This is an error message");
+  let arr = [0, 1, 2, 3, 4, 5, 6];
+  let k = &arr.len() / 2; // 7 / 2 = 3
+  dbg!(&arr[0..k]); // New thing learnt here: 0..3 for arrays does not include index 3
+  dbg!(&arr[k..]);
 }
 
 pub fn sort(arr: &Vec<u64>) -> anyhow::Result<Vec<u64>, Error> {

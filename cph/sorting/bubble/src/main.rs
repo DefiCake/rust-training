@@ -32,7 +32,6 @@ pub fn sort(arr: &Vec<u64>) -> anyhow::Result<Vec<u64>, Error> {
     }
     i += 1;
   }
-  dbg!(&result);
   Ok(result)
 }
 
