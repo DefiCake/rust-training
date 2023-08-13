@@ -73,4 +73,15 @@ mod tests {
 
     assert_eq!(result.err().unwrap(), SearchError::Empty);
   }
+
+  #[test]
+  fn test_search_elem_not_found() {
+    let arr: Vec<u64> = [1, 2, 3, 4, 5, 6].to_vec();
+
+    let result = search(&arr, &7);
+
+    assert!(result.is_err());
+
+    assert_eq!(result.err().unwrap(), SearchError::NotFound);
+  }
 }
