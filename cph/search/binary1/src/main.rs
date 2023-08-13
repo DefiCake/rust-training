@@ -10,10 +10,15 @@ fn main() {
   warn!("This is a warn message");
   error!("This is an error message");
 }
+#[derive(Debug, PartialEq, Eq)]
+pub enum SearchError {
+  Empty,
+  NotFound,
+}
 
-pub fn search(arr: &Vec<u64>, elem: &u64) -> anyhow::Result<usize, Error> {
+pub fn search(arr: &Vec<u64>, elem: &u64) -> anyhow::Result<usize, SearchError> {
   if arr.len() == 0 {
-    return Err(anyhow!("Array is empty"));
+    return Err(SearchError::Empty);
   }
 
   let mut a: usize = 0;
@@ -36,13 +41,12 @@ pub fn search(arr: &Vec<u64>, elem: &u64) -> anyhow::Result<usize, Error> {
     }
   }
 
-  Err(anyhow!("Not found"))
+  Err(SearchError::NotFound)
 }
 
 #[cfg(test)] // Next line will only be used when testing
 mod tests {
-  use crate::search;
-  use anyhow::anyhow;
+  use crate::{ search, SearchError };
   use rand::Rng;
 
   #[test]
@@ -67,6 +71,6 @@ mod tests {
 
     assert!(result.is_err());
 
-    assert_eq!(result.err().unwrap().to_string(), "Array is empty");
+    assert_eq!(result.err().unwrap(), SearchError::Empty);
   }
 }
