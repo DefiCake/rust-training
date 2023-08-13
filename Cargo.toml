@@ -13,5 +13,6 @@ members = [
     "x509",
     "fuel/block-transition-validation",
     "cph/sorting/bubble",
-    "cph/sorting/merge"
+    "cph/sorting/merge",
+    "cph/search/binary1"
 ]
