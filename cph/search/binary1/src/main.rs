@@ -1,4 +1,3 @@
-use anyhow::{ anyhow, Error };
 use log::{ info, warn, error };
 
 // Use environment variable RUST_LOG=<level> to display different levels of logging
