@@ -4,6 +4,7 @@ use anyhow::{ Context, Result };
 use clap::Parser;
 use openssl::{ pkcs12::Pkcs12, hash::MessageDigest };
 use p12::PFX;
+use sha2::{ Digest, Sha256 };
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -25,18 +26,26 @@ fn main() -> Result<()> {
   let mut buf = Vec::new();
   buf_reader.read_to_end(&mut buf)?;
 
-  let pkcs12 = PFX::parse(&buf)?;
+  let pkcs12 = PFX::parse(&buf).expect("P12.Error parsing file");
 
   let bags = &pkcs12.bags(password)?;
 
-  // TODO:
-  // - Check why some certs give ASN1 error for the pure lib
-  // - Get a digest of the certificate from the pure lib
+  // // TODO:
+  // // - Check why some certs give ASN1 error for the pure lib
+  // // - Get a digest of the certificate from the pure lib
+  // // - Cannot obtain it without parsing, so parsing is FUNDAMENTAL
   for bag in bags {
     match &bag.bag {
       p12::SafeBagKind::Pkcs8ShroudedKeyBag(_) => println!("Shrouded"),
-      p12::SafeBagKind::CertBag(_) => {
-        println!("CertBag");
+      p12::SafeBagKind::CertBag(cert) => {
+        match cert {
+          p12::CertBag::X509(bytes) => {
+            let hash = Sha256::new().chain_update(bytes).finalize();
+            let hash_hex = hex::encode(hash);
+            dbg!(hash_hex);
+          }
+          p12::CertBag::SDSI(_) => println!("CertBag -> SDSI"),
+        }
       }
       p12::SafeBagKind::OtherBagKind(_) => println!("Other"),
     };

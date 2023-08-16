@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 clap = {version = "4.0", features = ["derive"]}
-p12 = "0.6.3"
+p12 = { git = "https://github.com/hjiayz/p12.git", rev = "0b3b2e1a141c7c2384e85f3737dcc4d4ab4e8b9c"}
 openssl = {version = "0.10.55", features = ["vendored"]}
 hex = "0.4.3"
+sha2 = "0.10.7"

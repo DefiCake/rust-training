@@ -3697,8 +3697,7 @@ dependencies = [
 [[package]]
 name = "p12"
 version = "0.6.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4873306de53fe82e7e484df31e1e947d61514b6ea2ed6cd7b45d63006fd9224"
+source = "git+https://github.com/hjiayz/p12.git?rev=0b3b2e1a141c7c2384e85f3737dcc4d4ab4e8b9c#0b3b2e1a141c7c2384e85f3737dcc4d4ab4e8b9c"
 dependencies = [
  "cbc",
  "cipher",
@@ -6110,6 +6109,7 @@ dependencies = [
  "hex",
  "openssl",
  "p12",
+ "sha2 0.10.7",
 ]
 
 [[package]]
