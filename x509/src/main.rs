@@ -30,25 +30,40 @@ fn main() -> Result<()> {
 
   let bags = &pkcs12.bags(password)?;
 
-  // // TODO:
-  // // - Check why some certs give ASN1 error for the pure lib
-  // // - Get a digest of the certificate from the pure lib
-  // // - Cannot obtain it without parsing, so parsing is FUNDAMENTAL
   for bag in bags {
-    match &bag.bag {
-      p12::SafeBagKind::Pkcs8ShroudedKeyBag(_) => println!("Shrouded"),
-      p12::SafeBagKind::CertBag(cert) => {
-        match cert {
-          p12::CertBag::X509(bytes) => {
-            let hash = Sha256::new().chain_update(bytes).finalize();
-            let hash_hex = hex::encode(hash);
-            dbg!(hash_hex);
-          }
-          p12::CertBag::SDSI(_) => println!("CertBag -> SDSI"),
-        }
-      }
-      p12::SafeBagKind::OtherBagKind(_) => println!("Other"),
+    let cert: Option<&p12::CertBag> = match &bag.bag {
+      p12::SafeBagKind::CertBag(cert) => { Some(cert) }
+      _ => { None }
     };
+
+    if let Some(p12::CertBag::X509(cert_bytes)) = cert {
+      let hash = Sha256::new().chain_update(cert_bytes).finalize();
+      let hash_hex = hex::encode(hash);
+      dbg!(hash_hex);
+
+      let byte_pairs = cert_bytes.chunks(2);
+
+      // Collect the byte pairs and convert them to u16 values
+      let cert_as_u16_chunks: Vec<u16> = byte_pairs
+        .map(|chunk| {
+          let a = chunk[0];
+          let b = if chunk.len() == 2 { chunk[1] } else { 0x00 };
+
+          // println!("{}", hex::encode(vec![a, b]));
+          u16::from_be_bytes([a, b])
+        })
+        .collect();
+
+      // This might need a whole decoder utility for ASN1 / DER
+      let tbs_cert_len: usize = cert_as_u16_chunks[3].into();
+      let tbs_cert_start: usize = 8;
+      let tbs_cert_end = tbs_cert_start + tbs_cert_len;
+
+      let tbs_cert_bytes = &cert_bytes.as_slice()[tbs_cert_start..tbs_cert_end];
+
+      dbg!(hex::encode(tbs_cert_bytes));
+      break;
+    }
   }
 
   let pkcs12 = Pkcs12::from_der(&buf)?;
