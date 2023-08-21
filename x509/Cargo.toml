@@ -12,3 +12,5 @@ p12 = { git = "https://github.com/hjiayz/p12.git", rev = "0b3b2e1a141c7c2384e85f
 openssl = {version = "0.10.55", features = ["vendored"]}
 hex = "0.4.3"
 sha2 = "0.10.7"
+x509-cert= {version = "0.2.4", features = ["builder", "hazmat", "arbitrary"]}
+x509-parser = {version = "0.15.1"}
