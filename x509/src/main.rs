@@ -41,40 +41,10 @@ fn main() -> Result<()> {
       let hash_hex = hex::encode(hash);
       dbg!(hash_hex);
       let (_, parsed) = x509_parser::parse_x509_certificate(&cert_bytes).unwrap();
-      println!("  Subject: {}", &parsed.subject());
+      println!("  Subject: {} {}", &parsed.subject(), hex::encode(&parsed.subject().as_raw()));
       println!("  Key: {}", hex::encode(&parsed.public_key().raw));
       println!("  Expiry: {} {}", parsed.validity().not_after.timestamp(), parsed.validity().not_after);
 
-      // let byte_pairs = cert_bytes.chunks(2);
-
-      // // Collect the byte pairs and convert them to u16 values
-      // let cert_as_u16_chunks: Vec<u16> = byte_pairs
-      //   .map(|chunk| {
-      //     let a = chunk[0];
-      //     let b = if chunk.len() == 2 { chunk[1] } else { 0x00 };
-
-      //     // println!("{}", hex::encode(vec![a, b]));
-      //     u16::from_be_bytes([a, b])
-      //   })
-      //   .collect();
-
-      // // This might need a whole decoder utility for ASN1 / DER
-      // let tbs_cert_len: usize = cert_as_u16_chunks[3].into();
-      // let tbs_cert_start: usize = 8;
-      // let tbs_cert_end = tbs_cert_start + tbs_cert_len;
-
-      // let tbs_cert_bytes = &cert_bytes.as_slice()[tbs_cert_start..tbs_cert_end];
-      // dbg!(hex::encode(tbs_cert_bytes));
-
-      // let mut r = x509_cert::der::SliceReader::new(&cert_bytes).unwrap();
-      // let h: x509_cert::der::Header = x509_cert::der::Header {
-      //   tag: x509_cert::der::Tag::Sequence,
-      //   length: x509_cert::der::Length::new(830),
-      // };
-
-      // let a = x509_cert::certificate::Certificate::decode_value(&mut r, h).unwrap();
-
-      // dbg!(a);
       break;
     }
   }
@@ -94,6 +64,7 @@ fn main() -> Result<()> {
 
   dbg!(h);
   dbg!(cert.subject_name());
+  dbg!(cert.subject_name_hash());
   dbg!(pub_key);
   dbg!(validity);
 
