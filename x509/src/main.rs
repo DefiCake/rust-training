@@ -5,6 +5,7 @@ use clap::Parser;
 use openssl::{ pkcs12::Pkcs12, hash::MessageDigest };
 use p12::PFX;
 use sha2::{ Digest, Sha256 };
+use x509_parser::public_key::{ PublicKey, RSAPublicKey };
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -44,6 +45,16 @@ fn main() -> Result<()> {
       println!("  Subject: {} {}", &parsed.subject(), hex::encode(&parsed.subject().as_raw()));
       println!("  Key: {}", hex::encode(&parsed.public_key().raw));
       println!("  Expiry: {} {}", parsed.validity().not_after.timestamp(), parsed.validity().not_after);
+
+      let key_hex = match parsed.public_key().parsed() {
+        Ok(PublicKey::RSA(rsa_key)) => Some(hex::encode(rsa_key.modulus)),
+        Err(_) => None,
+        _ => None,
+      };
+
+      if let Some(key_hex) = key_hex {
+        println!("  Public key: {}", key_hex);
+      }
 
       break;
     }
