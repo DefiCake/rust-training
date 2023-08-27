@@ -15,5 +15,6 @@ members = [
     "cph/sorting/bubble",
     "cph/sorting/merge",
     "cph/search/binary1",
-    "cph/structures/set"
+    "cph/structures/set",
+    "cph/structures/map"
 ]
