@@ -14,5 +14,6 @@ members = [
     "fuel/block-transition-validation",
     "cph/sorting/bubble",
     "cph/sorting/merge",
-    "cph/search/binary1"
+    "cph/search/binary1",
+    "cph/structures/set"
 ]

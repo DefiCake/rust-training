@@ -5,7 +5,7 @@ use clap::Parser;
 use openssl::{ pkcs12::Pkcs12, hash::MessageDigest };
 use p12::PFX;
 use sha2::{ Digest, Sha256 };
-use x509_parser::public_key::{ PublicKey, RSAPublicKey };
+use x509_parser::public_key::PublicKey;
 
 #[derive(Parser, Debug)]
 struct Cli {
