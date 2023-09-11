@@ -5,35 +5,29 @@ pub fn luhn(input: &str) -> bool {
     return false;
   }
 
-  let mut cc_number_reversed: Vec<char> = cc_number.chars().collect();
-  cc_number_reversed.reverse();
-
   let mut sum: u32 = 0;
-  for i in 0..cc_number_reversed.len() {
-    if !cc_number_reversed[i].is_digit(10) {
+  for (i, ch) in cc_number.chars().rev().enumerate() {
+    if !ch.is_digit(10) {
       return false;
     }
 
-    let n = cc_number_reversed[i].to_digit(10).unwrap();
+    let n = ch.to_digit(10).unwrap();
 
     if i % 2 == 0 {
       sum += n;
-    } else {
-      let d: u32 = n * 2;
-      if d < 10 {
-        sum += d;
-      } else {
-        sum += d
-          .to_string()
-          .chars()
-          .map(|c| c.to_digit(10).unwrap())
-          .reduce(|acc, e| acc + e)
-          .unwrap();
-      }
+      continue;
     }
+
+    let d: u32 = n * 2;
+    if d < 10 {
+      sum += d;
+      continue;
+    }
+
+    sum += d / 10 + (d % 10);
   }
 
-  sum.to_string().ends_with("0")
+  sum % 10 == 0
 }
 
 #[test]
