@@ -18,4 +18,5 @@ members = [
     "cph/structures/set",
     "cph/structures/map",
     "gcr/day_1/array",
+    "gcr/day_1/luhn",
 ]
