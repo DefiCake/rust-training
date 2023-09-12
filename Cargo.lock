@@ -3467,6 +3467,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "library"
+version = "0.1.0"
+
+[[package]]
 name = "librocksdb-sys"
 version = "0.10.0+7.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

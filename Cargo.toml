@@ -19,4 +19,5 @@ members = [
     "cph/structures/map",
     "gcr/day_1/array",
     "gcr/day_1/luhn",
+    "gcr/day_2/library",
 ]
