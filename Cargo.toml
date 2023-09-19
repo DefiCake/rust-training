@@ -21,4 +21,5 @@ members = [
     "gcr/day_1/luhn",
     "gcr/day_2/library",
     "gcr/day_2/health",
+    "gcr/day_2/iterators",
 ]
