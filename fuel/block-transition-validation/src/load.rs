@@ -2,11 +2,11 @@ use std::sync::Arc;
 
 use fuel_core::{
   database::Database,
-  executor::{ RelayerPort, Executor },
+  executor::{ RelayerPort, Executor, OnceTransactionsSource },
   types::{ blockchain::{ primitives::DaBlockHeight, block::Block }, entities::message::Message },
   chain_config::ChainConfig,
 };
-use fuel_core_types::{ services::executor::ExecutionTypes, blockchain::header::PartialBlockHeader };
+use fuel_core_types::{ services::{executor::ExecutionTypes, block_producer::Components}, blockchain::header::PartialBlockHeader };
 use fuel_tx::{ Script, Transaction };
 use fuels::types::Nonce;
 use fuels::tx::Bytes32;
@@ -57,15 +57,31 @@ pub fn load() -> anyhow::Result<()> {
   def.consensus.height = height;
 
   let reproduced_block_header: PartialBlockHeader = PartialBlockHeader { ..def };
-  let mut reproduced_block: Block<Transaction> = Block::new(
-    reproduced_block_header,
-    Default::default(),
-    Default::default()
-  );
 
-  *reproduced_block.transactions_mut() = [transaction].into();
+  let component = ExecutionTypes::Production(Components {
+    header_to_produce: reproduced_block_header,
+    transactions_source: OnceTransactionsSource::new([transaction].into()),
+    gas_limit: u64::MAX
+  });
+  
+
+//   let component = match block {
+//     ExecutionTypes::DryRun(_) => {
+//         panic!("It is not possible to commit the dry run result");
+//     }
+//     ExecutionTypes::Production(block) => ExecutionTypes::Production(Components {
+//         header_to_produce: block.header,
+//         transactions_source: OnceTransactionsSource::new(block.transactions),
+//         gas_limit: u64::MAX,
+//     }),
+//     ExecutionTypes::Validation(block) => ExecutionTypes::Validation(block),
+// };
+
+// let (result, db_transaction) =
+//     self.execute_without_commit(component, options)?.into();
+
   let execution_result = executor.execute_without_commit(
-    ExecutionTypes::Production(reproduced_block.into()),
+    component,
     Default::default()
   )?;
 

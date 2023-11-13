@@ -86,22 +86,28 @@ pub async fn bootstrap(db_type: DBType) {
   let t = FuelsViewWallet::from_address(bob.into(), None);
 
   let mut inputs = vec![];
-  let i = w.get_asset_inputs_for_amount(asset_id_alice, alice_value / 2, None).await.unwrap();
+  let i = w.get_asset_inputs_for_amount(asset_id_alice, alice_value / 2).await.unwrap();
   inputs.extend(i);
 
   let mut outputs = vec![];
   let o = w.get_asset_outputs_for_amount(t.address(), asset_id_alice, alice_value / 2);
   outputs.extend(o);
 
-  let mut tx = ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default()).build().unwrap();
-  w.sign_transaction(&mut tx).unwrap();
+  let network_info = provider.network_info().await.unwrap();
+
+  
+  let mut tb = 
+    ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default(), network_info.clone());
+  w.sign_transaction(&mut tb);
+
+  let tx = tb.build().unwrap();
 
   Into::<Script>
     ::into(tx.clone())
     .to_bincode_file("transaction.bincode".into())
     .expect("Error serializing transaction");
 
-  let receipt = provider.send_transaction(&tx).await.unwrap();
+  let receipt = provider.send_transaction(tx).await.unwrap();
   println!("receipt {:?}", receipt);
 
   // let alice_balance = provider.get_asset_balance(&alice.clone().into(), Default::default()).await.unwrap();
