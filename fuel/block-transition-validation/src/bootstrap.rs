@@ -107,8 +107,38 @@ pub async fn bootstrap(db_type: DBType) {
     .to_bincode_file("transaction.bincode".into())
     .expect("Error serializing transaction");
 
-  let receipt = provider.send_transaction(tx).await.unwrap();
-  println!("receipt {:?}", receipt);
+  let tx_id = provider.send_transaction(tx).await.unwrap();
+  dbg!(tx_id); 
+  let pb = indicatif::ProgressBar::new_spinner();
+  pb.enable_steady_tick(std::time::Duration::from_millis(120));
+  pb.set_style(
+      indicatif::ProgressStyle::with_template("{spinner:.blue} {msg}")
+          .unwrap()
+          .tick_strings(&[
+              "▹▹▹▹▹",
+              "▸▹▹▹▹",
+              "▹▸▹▹▹",
+              "▹▹▸▹▹",
+              "▹▹▹▸▹",
+              "▹▹▹▹▸",
+              "▪▪▪▪▪",
+          ]),
+  );
+  pb.set_message("Waiting for receipt...");
+
+  loop {
+    let receipts = provider.tx_status(&tx_id).await;
+
+    if receipts.is_ok() {
+      break;
+    }
+  }
+
+  pb.finish_with_message("Waiting for receipt... Finished");
+
+  let receipts = provider.tx_status(&tx_id).await.unwrap().take_receipts();
+
+  dbg!(receipts);
 
   // let alice_balance = provider.get_asset_balance(&alice.clone().into(), Default::default()).await.unwrap();
   // let bob_balance = provider.get_asset_balance(&bob.clone().into(), Default::default()).await.unwrap();

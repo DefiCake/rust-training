@@ -13,6 +13,7 @@ fuel-core-types = {version = "0.20.8", features = ["test-helpers"]}
 fuel-core-storage = "0.20.8"
 fuels={version = "0.50.1", features=["std", "rocksdb", "fuel-core-lib"]}
 fuel-tx = { version = "0.35.3", default-features = false, features = ["builder", "serde"]}
+indicatif = { workspace = true }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 log = "0.4.19"
 env_logger = "0.10.0"
