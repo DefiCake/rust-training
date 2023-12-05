@@ -7,16 +7,16 @@ use fuel_core::{
   types::{
     fuel_types::{ Address, AssetId },
     fuel_crypto::rand::{ rngs::StdRng, Rng, SeedableRng },
-    fuel_vm::SecretKey,
     blockchain::block::Block,
   },
   state::rocks_db::RocksDb,
 };
+use fuel_crypto::SecretKey;
 use fuel_tx::Script;
 use fuels::{
   prelude::{ WalletUnlocked, Provider, Account, Signer },
   accounts::wallet::Wallet as FuelsViewWallet,
-  types::transaction_builders::{ ScriptTransactionBuilder, TransactionBuilder },
+  types::transaction_builders::{ ScriptTransactionBuilder, BuildableTransaction },
   tx::Bytes32,
 };
 
@@ -30,7 +30,7 @@ pub async fn bootstrap(db_type: DBType) {
 
   let mut rng = StdRng::seed_from_u64(10);
   // a coin with all options set
-  let alice_secret: SecretKey = rng.gen();
+  let alice_secret: SecretKey = SecretKey::random(&mut rng);
   let alice = Wallet::new(alice_secret);
   let asset_id_alice: AssetId = Default::default();
   let alice_value = 10_000_000;
@@ -82,32 +82,32 @@ pub async fn bootstrap(db_type: DBType) {
 
   let block_a = srv.shared.database.get_current_block().unwrap().unwrap();
 
-  let w = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
-  let t = FuelsViewWallet::from_address(bob.into(), None);
+  let sender_wallet = WalletUnlocked::new_from_private_key(alice_secret, Some(provider.clone()));
+  let receiver_wallet = FuelsViewWallet::from_address(bob.into(), None);
+  
 
   let mut inputs = vec![];
-  let i = w.get_asset_inputs_for_amount(asset_id_alice, alice_value / 2).await.unwrap();
+  let i = sender_wallet.get_asset_inputs_for_amount(asset_id_alice, alice_value / 2).await.unwrap();
   inputs.extend(i);
 
   let mut outputs = vec![];
-  let o = w.get_asset_outputs_for_amount(t.address(), asset_id_alice, alice_value / 2);
+  let o = sender_wallet.get_asset_outputs_for_amount(receiver_wallet.address(), asset_id_alice, alice_value / 2);
   outputs.extend(o);
 
   let network_info = provider.network_info().await.unwrap();
 
-  
-  let mut tb = 
+  let mut tb: ScriptTransactionBuilder = 
     ScriptTransactionBuilder::prepare_transfer(inputs, outputs, Default::default(), network_info.clone());
-  w.sign_transaction(&mut tb);
-
-  let tx = tb.build().unwrap();
+  sender_wallet.sign_transaction(&mut tb);
+  
+  let tx = tb.build(&provider).await.expect("Could not build tx");
 
   Into::<Script>
     ::into(tx.clone())
     .to_bincode_file("transaction.bincode".into())
     .expect("Error serializing transaction");
 
-  let tx_id = provider.send_transaction(tx).await.unwrap();
+  let tx_id = provider.send_transaction_and_await_commit(tx).await.unwrap();
   dbg!(tx_id); 
   let pb = indicatif::ProgressBar::new_spinner();
   pb.enable_steady_tick(std::time::Duration::from_millis(120));

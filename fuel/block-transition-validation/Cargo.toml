@@ -8,11 +8,12 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0"
 clap = {version = "4.0", features = ["derive", "cargo"]}
-fuel-core = {version = "0.20.8", features = ["relayer", "rocksdb"]}
-fuel-core-types = {version = "0.20.8", features = ["test-helpers"]}
-fuel-core-storage = "0.20.8"
-fuels={version = "0.50.1", features=["std", "rocksdb", "fuel-core-lib"]}
-fuel-tx = { version = "0.35.3", default-features = false, features = ["builder", "serde"]}
+fuel-core = {version = "0.21.0", features = ["relayer", "rocksdb"]}
+fuel-core-types = {version = "0.21.0", features = ["test-helpers"]}
+fuel-core-storage = "0.21.0"
+fuels={version = "0.53.0", features=["std", "rocksdb", "fuel-core-lib"]}
+fuel-crypto = { version = "0.43.1", default-features = false, features = ["random"]}
+fuel-tx = { version = "0.43.1", default-features = false, features = ["builder", "serde"]}
 indicatif = { workspace = true }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 log = "0.4.19"
