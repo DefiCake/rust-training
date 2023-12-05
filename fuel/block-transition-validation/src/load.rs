@@ -45,7 +45,8 @@ pub fn load() -> anyhow::Result<()> {
     "Could not deserialize block"
   );
   let time = block.header().time();
-  let height = initial_height + (1).into();
+
+  let height: fuel_crypto::fuel_types::BlockHeight = (u32::from(initial_height) + 1u32).into();
   let prev_root = block.header().prev_root().clone();
 
   let script = Script::from_bincode_file("transaction.bincode".into())?;
