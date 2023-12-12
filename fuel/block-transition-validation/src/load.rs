@@ -11,8 +11,6 @@ use fuel_tx::{ Script, Transaction };
 use fuels::types::Nonce;
 use fuels::tx::Bytes32;
 
-use crate::serialization::lib::BinFileSerde;
-
 #[derive(Clone, Debug)]
 struct MockRelayer {
   database: Database,
@@ -41,15 +39,30 @@ pub fn load() -> anyhow::Result<()> {
     config: Arc::new(Default::default()),
   };
 
-  let block: Block<Bytes32> = BinFileSerde::from_bincode_file("block_b.bincode".into()).expect(
-    "Could not deserialize block"
-  );
+  let block = 
+    std::fs::read_to_string("block_b.json")
+    .and_then(|stringified| {
+      let js: Block<Bytes32> = 
+        serde_json::from_str(stringified.as_str())
+        .expect("Could not deserialize block");
+      Ok(js)
+    })?;
+
   let time = block.header().time();
 
   let height: fuel_crypto::fuel_types::BlockHeight = (u32::from(initial_height) + 1u32).into();
   let prev_root = block.header().prev_root().clone();
 
-  let script = Script::from_bincode_file("transaction.bincode".into())?;
+  let script =
+    std::fs::read_to_string("transaction.json")
+    .and_then(|stringified| {
+      let js: Script = 
+        serde_json::from_str(stringified.as_str())
+        .expect("Could not deserialize script tx");
+
+      Ok(js)
+    })?;
+
   let transaction = Into::<Transaction>::into(script);
 
   let mut def = PartialBlockHeader::default();
@@ -64,29 +77,13 @@ pub fn load() -> anyhow::Result<()> {
     transactions_source: OnceTransactionsSource::new([transaction].into()),
     gas_limit: u64::MAX
   });
-  
-
-//   let component = match block {
-//     ExecutionTypes::DryRun(_) => {
-//         panic!("It is not possible to commit the dry run result");
-//     }
-//     ExecutionTypes::Production(block) => ExecutionTypes::Production(Components {
-//         header_to_produce: block.header,
-//         transactions_source: OnceTransactionsSource::new(block.transactions),
-//         gas_limit: u64::MAX,
-//     }),
-//     ExecutionTypes::Validation(block) => ExecutionTypes::Validation(block),
-// };
-
-// let (result, db_transaction) =
-//     self.execute_without_commit(component, options)?.into();
 
   let execution_result = executor.execute_without_commit(
     component,
     Default::default()
   )?;
 
-  dbg!(execution_result.result().block.header());
+  dbg!(execution_result.result().block.header().hash());
 
   Ok(())
 }
