@@ -6,3 +6,4 @@ rocksdb
 snapshot_a.json
 snapshot_b.json
 transaction.bincode
+transaction.json

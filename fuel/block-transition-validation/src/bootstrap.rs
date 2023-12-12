@@ -1,4 +1,4 @@
-use std::{ path::Path, sync::Arc };
+use std::{ path::Path, sync::Arc, fs::{write, OpenOptions} };
 
 use fuel_core::{
   database::Database,
@@ -20,7 +20,7 @@ use fuels::{
   tx::Bytes32,
 };
 
-use crate::{ wallet::wallet::Wallet, cli::cli::DBType, dbsnap::dbsnap::snapshot };
+use crate::{ wallet::wallet::Wallet, cli::cli::DBType, dbsnap::dbsnap::snapshot, serialization::json::to_json_file };
 use crate::serialization::lib::BinFileSerde;
 
 pub async fn bootstrap(db_type: DBType) {
@@ -102,10 +102,20 @@ pub async fn bootstrap(db_type: DBType) {
   
   let tx = tb.build(&provider).await.expect("Could not build tx");
 
-  Into::<Script>
-    ::into(tx.clone())
-    .to_bincode_file("transaction.bincode".into())
-    .expect("Error serializing transaction");
+  let unwrapped_tx: Script = tx.clone().into();
+  serde_json::to_string_pretty(&unwrapped_tx)
+    .and_then(|stringified| {
+      let path = "transaction.json";
+      OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&path)
+        .expect("Could not open path");
+      write(&path, stringified).expect("Failed to write to path");
+
+      Ok(())
+    }).expect("Failed to serialize transaction");
 
   let tx_id = provider.send_transaction_and_await_commit(tx).await.unwrap();
   dbg!(tx_id); 
@@ -146,9 +156,10 @@ pub async fn bootstrap(db_type: DBType) {
   // dbg!(bob_balance);
 
   let block_b = srv.shared.database.get_current_block().unwrap().unwrap();
+  
   // This does not get me enough information to rebuild the block and block transition...
-  // to_json_file(&block_a, "block_a.json".to_string()).expect("Failed block_a json write");
-  // to_json_file(&block_b, "block_b.json".to_string()).expect("Failed block_b write");
+  to_json_file(&block_a, "block_a.json".to_string()).expect("Failed block_a json write");
+  to_json_file(&block_b, "block_b.json".to_string()).expect("Failed block_b write");
 
   block_a.to_bincode_file("block_a.bincode".to_string()).expect("Failed block_a bincode write");
   block_b.to_bincode_file("block_b.bincode".to_string()).expect("Failed block_a bincode write");
